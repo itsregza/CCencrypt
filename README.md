@@ -1,4 +1,4 @@
-# dynamiteencrypt
+# dynamite encrypt
 
 Python card encryption for **Adyen**, **CyberSource Flex**, and **eWay**.
 
