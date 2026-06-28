@@ -1,8 +1,6 @@
 # dynamiteencrypt
 
-Python card encryption for **Adyen 4.5.0** and **CyberSource Flex**.
-
-No Node.js required.
+Python card encryption for **Adyen** and **CyberSource Flex**.
 
 ## Install
 
