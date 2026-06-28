@@ -1,5 +1,8 @@
 import json
 import os
+import urllib.parse
+
+import requests
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -7,6 +10,8 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from dynamiteencrypt.encoding import b64url, b64url_decode, jwt_payload
+
+FLEX_TOKENS_URL = "https://flex.cybersource.com/flex/v2/tokens"
 
 
 CardTypes = {
@@ -85,3 +90,57 @@ def dynamitecybersource(card, month, year, cvv, context, index=0):
             b64url(tag),
         ]
     )
+
+
+def microform_referer(context):
+    kid = jwt_payload(context)["flx"]["jwk"]["kid"]
+    q = urllib.parse.quote(kid, safe="")
+    return f"https://flex.cybersource.com/microform/bundle/v2.9.0/iframe.html?keyId={q}"
+
+
+def dynamitecybersource_token(
+    card,
+    month,
+    year,
+    cvv,
+    context,
+    origin=None,
+    referer=None,
+    user_agent=None,
+    microform=False,
+    index=0,
+    timeout=30,
+):
+    encrypted = dynamitecybersource(card, month, year, cvv, context, index=index)
+
+    if microform:
+        headers = {
+            "content-type": "application/jwt; charset=UTF-8",
+            "origin": "https://flex.cybersource.com",
+            "referer": referer or microform_referer(context),
+        }
+    else:
+        if not origin:
+            raise ValueError("origin required unless microform=True")
+        site = origin.rstrip("/")
+        headers = {
+            "content-type": "application/jwt",
+            "origin": site,
+            "referer": referer or f"{site}/",
+        }
+
+    if user_agent:
+        headers["user-agent"] = user_agent
+
+    resp = requests.post(
+        FLEX_TOKENS_URL,
+        headers=headers,
+        data=str(encrypted).strip(),
+        timeout=timeout,
+    )
+    if resp.status_code != 201:
+        raise RuntimeError(f"flex /tokens failed: {resp.status_code} {(resp.text or '')[:300]}")
+    token = (resp.text or "").strip()
+    if not token:
+        raise RuntimeError("flex /tokens returned empty body")
+    return token

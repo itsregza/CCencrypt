@@ -12,6 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "itsregza" }]
 dependencies = [
     "cryptography>=42.0.0",
+    "requests>=2.28.0",
 ]
 
 [project.urls]

@@ -57,6 +57,36 @@ token = dynamiteencrypt.dynamitecybersource(
 
 Post `token` to `https://flex.cybersource.com/flex/v2/tokens` as `application/jwt`.
 
+Or encrypt and exchange in one call:
+
+```python
+transient_token = dynamiteencrypt.dynamitecybersource_token(
+    card="4242424242424242",
+    month="12",
+    year="2029",
+    cvv="123",
+    context=context_jwt_from_init,
+    origin="https://www.myer.com.au",
+    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+)
+```
+
+Microform sites (e.g. Pokemon Centre):
+
+```python
+transient_token = dynamiteencrypt.dynamitecybersource_token(
+    card="4242424242424242",
+    month="12",
+    year="2029",
+    cvv="123",
+    context=capture_context,
+    microform=True,
+    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+)
+```
+
+Returns the transient token body from Flex `/tokens` (HTTP 201).
+
 ### eWay
 
 Use the `data-eway-encrypt-key` value from the merchant form (base64 modulus blob).
@@ -82,3 +112,4 @@ Returns strings prefixed with `eCrypted:` as eWay expects.
 
 - Python 3.9+
 - cryptography
+- requests
