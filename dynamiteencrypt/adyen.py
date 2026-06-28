@@ -21,10 +21,10 @@ def utc_stamp():
     return dt.strftime("%Y-%m-%dT%H:%M:%S.") + f"{int(dt.microsecond / 1000):03d}Z"
 
 
-def parse_public_key(adyen_key):
-    parts = adyen_key.split("|", 1)
+def parse_public_key(encrypt_key):
+    parts = encrypt_key.split("|", 1)
     if len(parts) != 2:
-        raise ValueError("malformed adyen key")
+        raise ValueError("malformed encrypt key")
     e = int.from_bytes(hex_to_bytes(parts[0]), "big")
     n = int.from_bytes(hex_to_bytes(parts[1]), "big")
     return rsa.RSAPublicNumbers(e, n).public_key(default_backend())
@@ -56,11 +56,11 @@ def jwe_encrypt(payload, public_key):
     return ".".join([header_b64, b64url(wrapped_key), b64url(iv), b64url(ciphertext), b64url(auth_tag)])
 
 
-def secured_fields_referrer(stripe_key, domain):
+def secured_fields_referrer(client_key, domain):
     d = b64url(domain.encode("utf-8"))
     return (
         "https://checkoutshopper-live.adyen.com/checkoutshopper/securedfields/"
-        f"{stripe_key}/4.5.0/securedFields.html?type=card&d={d}"
+        f"{client_key}/4.5.0/securedFields.html?type=card&d={d}"
     )
 
 
@@ -106,25 +106,25 @@ def build_card_payloads(card, month, year, cvc, referrer, ts):
 
 
 def dynamiteadyen(
-    adyen_key,
+    encrypt_key,
     card,
     month,
     year,
     cvc,
-    stripe_key=None,
+    client_key=None,
     domain=None,
 ):
     if not card or not month or not year or not cvc:
         raise ValueError("missing card details")
-    if not adyen_key:
-        raise ValueError("missing adyen key")
-    if not stripe_key:
-        stripe_key = "live_SQV7J3WVMNFK3HU33BTUNF5AH4E2L2ZN"
+    if not encrypt_key:
+        raise ValueError("missing encrypt key")
+    if not client_key:
+        client_key = "live_SQV7J3WVMNFK3HU33BTUNF5AH4E2L2ZN"
     if not domain:
         domain = "https://minisoshop.co.uk"
 
-    rsa_key = parse_public_key(adyen_key)
-    referrer = secured_fields_referrer(stripe_key, domain)
+    rsa_key = parse_public_key(encrypt_key)
+    referrer = secured_fields_referrer(client_key, domain)
     ts = utc_stamp()
     fields = build_card_payloads(card, month, year, cvc, referrer, ts)
 
