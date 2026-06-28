@@ -1,6 +1,6 @@
 # dynamiteencrypt
 
-Python card encryption for **Adyen** and **CyberSource Flex**.
+Python card encryption for **Adyen**, **CyberSource Flex**, and **eWay**.
 
 ## Install
 
@@ -56,6 +56,27 @@ token = dynamiteencrypt.dynamitecybersource(
 ```
 
 Post `token` to `https://flex.cybersource.com/flex/v2/tokens` as `application/jwt`.
+
+### eWay
+
+Use the `data-eway-encrypt-key` value from the merchant form (base64 modulus blob).
+
+```python
+import dynamiteencrypt
+
+encrypted_pan = dynamiteencrypt.dynamiteeway(encrypt_key, "4242424242424242")
+encrypted_cvv = dynamiteencrypt.dynamiteeway(encrypt_key, "123")
+
+# or both at once for EWAY form fields
+fields = dynamiteencrypt.dynamiteeway_card(
+    encrypt_key,
+    card="4242424242424242",
+    cvv="123",
+)
+# fields["EWAY_CARDNUMBER"], fields["EWAY_CARDCVN"]
+```
+
+Returns strings prefixed with `eCrypted:` as eWay expects.
 
 ## Requirements
 
