@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 from datetime import datetime, timezone
@@ -58,7 +59,7 @@ def jwe_encrypt(payload, public_key):
 
 
 def secured_fields_referrer(client_key, domain):
-    d = b64url(domain.encode("utf-8"))
+    d = base64.b64encode(domain.encode("utf-8")).decode("ascii")
     return (
         "https://checkoutshopper-live.adyen.com/checkoutshopper/securedfields/"
         f"{client_key}/4.5.0/securedFields.html?type=card&d={d}"
