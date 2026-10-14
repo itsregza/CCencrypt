@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
+from dynamiteencrypt.adyen_cse import cse_encrypt
 from dynamiteencrypt.encoding import b64url, hex_to_bytes, pack_bit_length
 
 OAEP = padding.OAEP(
@@ -113,11 +114,14 @@ def dynamiteadyen(
     cvc,
     client_key=None,
     domain=None,
+    version="4.5.0",
 ):
     if not card or not month or not year or not cvc:
         raise ValueError("missing card details")
     if not encrypt_key:
         raise ValueError("missing encrypt key")
+    if str(version).strip() != "4.5.0":
+        return dynamiteadyen_cse(encrypt_key, card, month, year, cvc, version=version)
     if not client_key:
         client_key = "live_SQV7J3WVMNFK3HU33BTUNF5AH4E2L2ZN"
     if not domain:
@@ -129,3 +133,23 @@ def dynamiteadyen(
     fields = build_card_payloads(card, month, year, cvc, referrer, ts)
 
     return {name: jwe_encrypt(data, rsa_key) for name, data in fields.items()}
+
+
+def dynamiteadyen_cse(encrypt_key, card, month, year, cvc, version="0_1_25"):
+    if not card or not month or not year or not cvc:
+        raise ValueError("missing card details")
+    if not encrypt_key:
+        raise ValueError("missing encrypt key")
+
+    rsa_key = parse_public_key(encrypt_key)
+    ts = utc_stamp()
+    year = "".join(c for c in str(year) if c.isdigit())
+    if len(year) == 2:
+        year = ("20" if int(year) <= 50 else "19") + year
+    fields = {
+        "encryptedCardNumber": {"number": format_pan(card), "generationtime": ts},
+        "encryptedExpiryMonth": {"expiryMonth": str(month).zfill(2), "generationtime": ts},
+        "encryptedExpiryYear": {"expiryYear": year, "generationtime": ts},
+        "encryptedSecurityCode": {"cvc": str(cvc), "generationtime": ts},
+    }
+    return {name: cse_encrypt(data, rsa_key, version) for name, data in fields.items()}

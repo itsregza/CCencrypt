@@ -39,6 +39,34 @@ print(result["encryptedExpiryYear"])
 print(result["encryptedSecurityCode"])
 ```
 
+`version` defaults to `"4.5.0"` (Secured Fields / JWE). For sites still on the
+legacy client-side encryption (`adyenjs_0_1_XX$...`), pass one of
+`"0_1_18"`, `"0_1_22"`, `"0_1_23"`, `"0_1_24"` or `"0_1_25"` (`25` or `"0.1.25"` also work).
+`client_key` and `domain` are ignored for legacy versions.
+
+```python
+result = dynamiteencrypt.dynamiteadyen(
+    encrypt_key="10001|...",
+    card="4242424242424242",
+    month="12",
+    year="2029",
+    cvc="123",
+    version="0_1_25",
+)
+```
+
+To encrypt a custom payload (e.g. `holderName`) with a legacy version:
+
+```python
+from dynamiteencrypt.adyen import parse_public_key
+
+blob = dynamiteencrypt.cse_encrypt(
+    {"holderName": "John Smith", "generationtime": "2029-01-01T00:00:00.000Z"},
+    parse_public_key("10001|..."),
+    version="0_1_25",
+)
+```
+
 ### CyberSource
 
 You need a `context` JWT from the merchant init endpoint first (e.g. `/cybersource/init`).
