@@ -13,7 +13,7 @@ def modulus_from_key_blob(key_blob):
     return rsa.RSAPublicNumbers(65537, n).public_key(default_backend())
 
 
-def dynamiteeway(encrypt_key, value):
+def cceway(encrypt_key, value):
     if not encrypt_key:
         raise ValueError("missing encrypt key")
     if value is None or str(value).strip() == "":
@@ -24,10 +24,10 @@ def dynamiteeway(encrypt_key, value):
     return "eCrypted:" + base64.b64encode(ciphertext).decode("ascii")
 
 
-def dynamiteeway_card(encrypt_key, card, cvv):
+def cceway_card(encrypt_key, card, cvv):
     pan = str(card).strip().replace(" ", "").replace("-", "")
     code = str(cvv).strip()
     return {
-        "EWAY_CARDNUMBER": dynamiteeway(encrypt_key, pan),
-        "EWAY_CARDCVN": dynamiteeway(encrypt_key, code),
+        "EWAY_CARDNUMBER": cceway(encrypt_key, pan),
+        "EWAY_CARDCVN": cceway(encrypt_key, code),
     }

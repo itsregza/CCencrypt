@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from dynamiteencrypt.encoding import b64url, b64url_decode, jwt_payload
+from ccencrypt.encoding import b64url, b64url_decode, jwt_payload
 
 FLEX_TOKENS_URL = "https://flex.cybersource.com/flex/v2/tokens"
 
@@ -41,7 +41,7 @@ def jwk_rsa_key(jwk):
     return rsa.RSAPublicNumbers(e, n).public_key(default_backend())
 
 
-def dynamitecybersource(card, month, year, cvv, context, index=0):
+def cccybersource(card, month, year, cvv, context, index=0):
     key_id = jwt_payload(context)
     jwk = key_id["flx"]["jwk"]
     header = {
@@ -98,7 +98,7 @@ def microform_referer(context):
     return f"https://flex.cybersource.com/microform/bundle/v2.9.0/iframe.html?keyId={q}"
 
 
-def dynamitecybersource_token(
+def cccybersource_token(
     card,
     month,
     year,
@@ -111,7 +111,7 @@ def dynamitecybersource_token(
     index=0,
     timeout=30,
 ):
-    encrypted = dynamitecybersource(card, month, year, cvv, context, index=index)
+    encrypted = cccybersource(card, month, year, cvv, context, index=index)
 
     if microform:
         headers = {

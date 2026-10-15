@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dynamiteencrypt"
+name = "CCencrypt"
 version = "0.2.1"
 description = "Adyen and CyberSource card encryption for Python"
 readme = "README.md"
@@ -16,9 +16,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/itsregza/dynamiteencrypt"
-Repository = "https://github.com/itsregza/dynamiteencrypt"
+Homepage = "https://github.com/itsregza/CCencrypt"
+Repository = "https://github.com/itsregza/CCencrypt"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["dynamiteencrypt*"]
+include = ["ccencrypt*"]

@@ -8,8 +8,8 @@ from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-from dynamiteencrypt.adyen_cse import cse_encrypt
-from dynamiteencrypt.encoding import b64url, hex_to_bytes, pack_bit_length
+from ccencrypt.adyen_cse import cse_encrypt
+from ccencrypt.encoding import b64url, hex_to_bytes, pack_bit_length
 
 OAEP = padding.OAEP(
     mgf=padding.MGF1(algorithm=hashes.SHA1()),
@@ -107,7 +107,7 @@ def build_card_payloads(card, month, year, cvc, referrer, ts):
     }
 
 
-def dynamiteadyen(
+def ccadyen(
     encrypt_key,
     card,
     month,
@@ -122,7 +122,7 @@ def dynamiteadyen(
     if not encrypt_key:
         raise ValueError("missing encrypt key")
     if str(version).strip() != "4.5.0":
-        return dynamiteadyen_cse(encrypt_key, card, month, year, cvc, version=version)
+        return ccadyen_cse(encrypt_key, card, month, year, cvc, version=version)
     if not client_key:
         client_key = "live_SQV7J3WVMNFK3HU33BTUNF5AH4E2L2ZN"
     if not domain:
@@ -136,7 +136,7 @@ def dynamiteadyen(
     return {name: jwe_encrypt(data, rsa_key) for name, data in fields.items()}
 
 
-def dynamiteadyen_cse(encrypt_key, card, month, year, cvc, version="0_1_25"):
+def ccadyen_cse(encrypt_key, card, month, year, cvc, version="0_1_25"):
     if not card or not month or not year or not cvc:
         raise ValueError("missing card details")
     if not encrypt_key:
