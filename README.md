@@ -10,12 +10,6 @@ From GitHub:
 pip install git+https://github.com/itsregza/CCencrypt.git
 ```
 
-Local dev:
-
-```bash
-pip install -e ./CCencrypt
-```
-
 ## Usage
 
 ### Adyen
@@ -95,7 +89,7 @@ transient_token = ccencrypt.cccybersource_token(
     cvv="123",
     context=context_jwt_from_init,
     origin="https://www.myer.com.au",
-    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
 )
 ```
 
@@ -109,7 +103,7 @@ transient_token = ccencrypt.cccybersource_token(
     cvv="123",
     context=capture_context,
     microform=True,
-    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
 )
 ```
 
