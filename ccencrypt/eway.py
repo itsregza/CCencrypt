@@ -3,6 +3,8 @@ import base64
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
+from ccencrypt.helpers.card import clean_card
+
 
 def modulus_from_key_blob(key_blob):
     try:
@@ -25,7 +27,7 @@ def cceway(encrypt_key, value):
 
 
 def cceway_card(encrypt_key, card, cvv):
-    pan = str(card).strip().replace(" ", "").replace("-", "")
+    pan = clean_card(card)
     code = str(cvv).strip()
     return {
         "EWAY_CARDNUMBER": cceway(encrypt_key, pan),

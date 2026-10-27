@@ -9,7 +9,8 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from ccencrypt.encoding import b64url, b64url_decode, jwt_payload
+from ccencrypt.helpers.card import clean_card, expiry
+from ccencrypt.helpers.encoding import b64url, b64url_decode, jwt_payload
 
 FLEX_TOKENS_URL = "https://flex.cybersource.com/flex/v2/tokens"
 
@@ -27,7 +28,7 @@ CardTypes = {
 
 
 def card_type(number):
-    n = str(number).strip().replace(" ", "").replace("-", "")
+    n = clean_card(number)
     if n.startswith("5"):
         return CardTypes["MasterCard"]
     if n.startswith("34") or n.startswith("37"):
@@ -49,12 +50,13 @@ def cccybersource(card, month, year, cvv, context, index=0):
         "alg": "RSA-OAEP",
         "enc": "A256GCM",
     }
+    month, year = expiry(month, year)
     payload = {
         "data": {
-            "number": str(card).strip().replace(" ", "").replace("-", ""),
+            "number": clean_card(card),
             "securityCode": str(cvv),
-            "expirationMonth": str(month),
-            "expirationYear": str(year),
+            "expirationMonth": month,
+            "expirationYear": year,
             "type": card_type(card),
         },
         "context": context,

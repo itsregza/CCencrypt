@@ -1,0 +1,66 @@
+import base64
+import json
+import uuid
+
+import requests
+
+from ccencrypt.helpers.card import clean_card, expiry, proxies
+
+BRAINTREE_GQL_URL = "https://payments.braintree-api.com/graphql"
+
+TOKENIZE_QUERY = (
+    "mutation TokenizeCreditCard($input: TokenizeCreditCardInput!) { "
+    "tokenizeCreditCard(input: $input) { token creditCard { bin brandCode last4 } } }"
+)
+
+
+def fingerprint(client_token):
+    try:
+        data = json.loads(base64.b64decode(client_token))
+    except Exception:
+        return client_token
+    return data["authorizationFingerprint"]
+
+
+def ccbraintree(client_token, card, month, year, cvv, name="", proxy=None, timeout=30):
+    month, year = expiry(month, year)
+    payload = {
+        "clientSdkMetadata": {
+            "source": "client",
+            "integration": "custom",
+            "sessionId": str(uuid.uuid4()),
+        },
+        "query": TOKENIZE_QUERY,
+        "variables": {
+            "input": {
+                "creditCard": {
+                    "number": clean_card(card),
+                    "expirationMonth": month,
+                    "expirationYear": year,
+                    "cvv": str(cvv).strip(),
+                    "cardholderName": name,
+                },
+                "options": {"validate": False},
+            }
+        },
+        "operationName": "TokenizeCreditCard",
+    }
+
+    resp = requests.post(
+        BRAINTREE_GQL_URL,
+        headers={
+            "authorization": f"Bearer {fingerprint(client_token)}",
+            "braintree-version": "2018-05-10",
+            "content-type": "application/json",
+            "origin": "https://assets.braintreegateway.com",
+            "referer": "https://assets.braintreegateway.com/",
+        },
+        json=payload,
+        proxies=proxies(proxy),
+        timeout=timeout,
+    )
+    body = resp.json() if resp.text else {}
+    token = ((body.get("data") or {}).get("tokenizeCreditCard") or {}).get("token")
+    if resp.status_code != 200 or not token:
+        raise RuntimeError(f"braintree failed: {resp.status_code} {resp.text[:300]}")
+    return token
