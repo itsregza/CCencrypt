@@ -202,3 +202,7 @@ token = ccencrypt.ccpaydock(
 ```
 
 If the site's token request includes a `gateway_id`, pass it as `gateway_id`.
+
+## Connect
+- Discord - itsregza
+- Email - itsregza@gmail.com
