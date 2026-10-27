@@ -3,6 +3,9 @@
 </p>
 
 <p align="center">Card encryption and tokenisation for Python.</p>
+<p align="center">
+  <a href="https://pypi.org/project/ccencrypt/"><img src="https://img.shields.io/pypi/v/ccencrypt?color=6366f1&label=pypi" alt="PyPI"></a>
+</p>
 
 | Processor | Function | Type | Returns |
 |---|---|---|---|
