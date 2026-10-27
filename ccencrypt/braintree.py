@@ -4,6 +4,8 @@ import uuid
 
 import requests
 
+from ccencrypt.helpers.card import clean_card, proxies
+
 BRAINTREE_GQL_URL = "https://payments.braintree-api.com/graphql"
 
 TOKENIZE_QUERY = (
@@ -31,7 +33,7 @@ def ccbraintree(client_token, card, month, year, cvv, name="", proxy=None, timeo
         "variables": {
             "input": {
                 "creditCard": {
-                    "number": str(card).strip().replace(" ", "").replace("-", ""),
+                    "number": clean_card(card),
                     "expirationMonth": str(month).strip().zfill(2),
                     "expirationYear": str(year).strip(),
                     "cvv": str(cvv).strip(),
@@ -53,7 +55,7 @@ def ccbraintree(client_token, card, month, year, cvv, name="", proxy=None, timeo
             "referer": "https://assets.braintreegateway.com/",
         },
         json=payload,
-        proxies={"http": proxy, "https": proxy} if proxy else None,
+        proxies=proxies(proxy),
         timeout=timeout,
     )
     body = resp.json() if resp.text else {}

@@ -1,5 +1,7 @@
 import requests
 
+from ccencrypt.helpers.card import clean_card, proxies
+
 PAYDOCK_TOKENS_URL = "https://api.paydock.com/v1/payment_sources/tokens"
 
 
@@ -7,7 +9,7 @@ def ccpaydock(public_key, card, month, year, cvv, name, gateway_id="", proxy=Non
     payload = {
         "type": "card",
         "card_name": name,
-        "card_number": str(card).strip().replace(" ", "").replace("-", ""),
+        "card_number": clean_card(card),
         "expire_month": str(month).strip().zfill(2)[-2:],
         "expire_year": str(year).strip()[-2:],
         "card_ccv": str(cvv).strip(),
@@ -28,7 +30,7 @@ def ccpaydock(public_key, card, month, year, cvv, name, gateway_id="", proxy=Non
             "x-user-public-key": public_key,
         },
         json=payload,
-        proxies={"http": proxy, "https": proxy} if proxy else None,
+        proxies=proxies(proxy),
         timeout=timeout,
     )
     body = resp.json() if resp.text else {}

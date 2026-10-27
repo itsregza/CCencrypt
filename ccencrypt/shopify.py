@@ -1,13 +1,8 @@
 import requests
 
+from ccencrypt.helpers.card import proxies, spaced_card
+
 SHOPIFY_PCI_URL = "https://checkout.pci.shopifyinc.com/sessions"
-
-
-def spaced(card):
-    n = str(card).strip().replace(" ", "").replace("-", "")
-    if len(n) == 15:
-        return f"{n[:4]} {n[4:10]} {n[10:]}"
-    return " ".join(n[i : i + 4] for i in range(0, len(n), 4))
 
 
 def ccshopify(domain, card, month, year, cvv, name, proxy=None, timeout=30):
@@ -16,7 +11,7 @@ def ccshopify(domain, card, month, year, cvv, name, proxy=None, timeout=30):
         year = "20" + year
     payload = {
         "credit_card": {
-            "number": spaced(card),
+            "number": spaced_card(card),
             "month": int(month),
             "year": int(year),
             "verification_value": str(cvv).strip(),
@@ -37,7 +32,7 @@ def ccshopify(domain, card, month, year, cvv, name, proxy=None, timeout=30):
             "referer": "https://checkout.pci.shopifyinc.com/",
         },
         json=payload,
-        proxies={"http": proxy, "https": proxy} if proxy else None,
+        proxies=proxies(proxy),
         timeout=timeout,
     )
     body = resp.json() if resp.text else {}

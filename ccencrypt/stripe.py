@@ -2,6 +2,8 @@ import uuid
 
 import requests
 
+from ccencrypt.helpers.card import clean_card, proxies
+
 STRIPE_PM_URL = "https://api.stripe.com/v1/payment_methods"
 STRIPE_JS = "stripe.js/e2a5fc9c3e; stripe-js-v3/e2a5fc9c3e; card-element"
 
@@ -9,7 +11,7 @@ STRIPE_JS = "stripe.js/e2a5fc9c3e; stripe-js-v3/e2a5fc9c3e; card-element"
 def ccstripe(key, card, month, year, cvc, name="", account=None, proxy=None, timeout=30):
     data = {
         "type": "card",
-        "card[number]": str(card).strip().replace(" ", "").replace("-", ""),
+        "card[number]": clean_card(card),
         "card[cvc]": str(cvc).strip(),
         "card[exp_month]": str(month).strip().zfill(2),
         "card[exp_year]": str(year).strip()[-2:],
@@ -33,7 +35,7 @@ def ccstripe(key, card, month, year, cvc, name="", account=None, proxy=None, tim
             "referer": "https://js.stripe.com/",
         },
         data=data,
-        proxies={"http": proxy, "https": proxy} if proxy else None,
+        proxies=proxies(proxy),
         timeout=timeout,
     )
     body = resp.json() if resp.text else {}

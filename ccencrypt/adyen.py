@@ -9,7 +9,8 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from ccencrypt.adyen_cse import cse_encrypt
-from ccencrypt.encoding import b64url, hex_to_bytes, pack_bit_length
+from ccencrypt.helpers.card import clean_card
+from ccencrypt.helpers.encoding import b64url, hex_to_bytes, pack_bit_length
 
 OAEP = padding.OAEP(
     mgf=padding.MGF1(algorithm=hashes.SHA1()),
@@ -67,7 +68,7 @@ def secured_fields_referrer(client_key, domain):
 
 
 def format_pan(card):
-    digits = str(card).strip().replace(" ", "").replace("-", "")
+    digits = clean_card(card)
     return " ".join(digits[i : i + 4] for i in range(0, len(digits), 4))
 
 
