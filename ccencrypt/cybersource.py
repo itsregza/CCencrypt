@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from ccencrypt.helpers.card import clean_card, expiry
+from ccencrypt.helpers.card import clean_card, expiry, proxies
 from ccencrypt.helpers.encoding import b64url, b64url_decode, jwt_payload
 
 FLEX_TOKENS_URL = "https://flex.cybersource.com/flex/v2/tokens"
@@ -111,6 +111,7 @@ def cccybersource_token(
     user_agent=None,
     microform=False,
     index=0,
+    proxy=None,
     timeout=30,
 ):
     encrypted = cccybersource(card, month, year, cvv, context, index=index)
@@ -138,6 +139,7 @@ def cccybersource_token(
         FLEX_TOKENS_URL,
         headers=headers,
         data=str(encrypted).strip(),
+        proxies=proxies(proxy),
         timeout=timeout,
     )
     if resp.status_code != 201:

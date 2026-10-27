@@ -1,137 +1,201 @@
-# CCencrypt
+<p align="center">
+  <img src="https://raw.githubusercontent.com/itsregza/CCencrypt/main/assets/banner.svg" alt="CCencrypt" width="520">
+</p>
 
-Python card encryption for **Adyen**, **CyberSource Flex**, and **eWay**.
+<p align="center">Card encryption and tokenisation for Python.</p>
+
+| Processor | Function | Type | Returns |
+|---|---|---|---|
+| Adyen | `ccadyen` | Encrypt | dict of 4 encrypted fields |
+| CyberSource Flex | `cccybersource` / `cccybersource_token` | Encrypt / Tokenise | JWE / transient token |
+| eWay | `cceway` / `cceway_card` | Encrypt | `eCrypted:...` strings |
+| Stripe | `ccstripe` | Tokenise | `pm_...` payment method id |
+| Braintree | `ccbraintree` | Tokenise | `tokencc_...` nonce |
+| Shopify | `ccshopify` | Tokenise | card session id |
+| PayDock | `ccpaydock` | Tokenise | one-time card token |
 
 ## Install
 
-From GitHub:
-
 ```bash
-pip install git+https://github.com/itsregza/CCencrypt.git
+pip install ccencrypt
 ```
 
-## Usage
+## Card details
+
+Every function cleans the card details before using them, so any of these work:
+
+| Field | Accepted |
+|---|---|
+| card | `"4242424242424242"`, `"4242 4242 4242 4242"`, `"4242-4242-4242-4242"` |
+| month | `1`, `"1"`, `"01"` |
+| year | `29`, `"29"`, `2029`, `"2029"` |
+
+Month and year are always separate arguments. If you have `"01/29"`, split it first:
+
+```python
+month, year = "01/29".split("/")
+```
+
+## Proxies
+
+You can pass a proxy for the process. Some processors like paydock will ratelimit so its important to use proxies:
+
+```python
+token = ccencrypt.ccpaydock(public_key, card, month, year, cvv, name, proxy="http://user:pass@host:port")
+```
+
+## Errors
+
+Tokenise functions raise `RuntimeError` with the status code and response body when the processor rejects the request.
+
+---
+
+## Encryption
 
 ### Adyen
+
+`encrypt_key` is the site's Adyen public key (`10001|A532...`).
 
 ```python
 import ccencrypt
 
 result = ccencrypt.ccadyen(
-    encrypt_key="10001|A53214687356F8E86F1D6057C95EFAFB913DC2E7E7997E3927A87C42CBCAD46E425A8069EA11EBC44B052CF78D8D3022214FFC7453DD4151BE17E6232C4ECB77E0B6F5BE4DD6E6D28C0E5AE8C287528A8474E1E327AAE6BBE32E84538D3B28DAB0338C260BF4A008974F45CEF86B1D5634FAD85FAFAC17019082DD1AB3A78A9116334620A82EB2C986D65422ED20DB16094D5A7CBFC0FA936D0444B189719BE71A13AA8734E38CF37D94F35A2C0B519F5BDDA750CB6A8EE90F904A94D4BD653C0179D9BF93D9D160D26327BA76369221DA2F0AC0260580643E09479300E46F38ADD155F89D245E4260CAEDB72A144CB364AC9B97ADE35E27B46A7C887CBEEFD3",
+    encrypt_key="10001|A532...",
     card="4242424242424242",
     month="12",
     year="2029",
     cvc="123",
-    client_key="live_SQV7J3WVMNFK3HU33BTUNF5AH4E2L2ZN",   # optional
-    domain="https://minisoshop.co.uk",  # optional
+    client_key="live_...",
+    domain="https://example.com",
 )
 
-print(result["encryptedCardNumber"])
-print(result["encryptedExpiryMonth"])
-print(result["encryptedExpiryYear"])
-print(result["encryptedSecurityCode"])
+result["encryptedCardNumber"]
+result["encryptedExpiryMonth"]
+result["encryptedExpiryYear"]
+result["encryptedSecurityCode"]
 ```
 
-`version` defaults to `"4.5.0"` (Secured Fields / JWE). For sites still on the
-legacy client-side encryption (`adyenjs_0_1_XX$...`), pass one of
-`"0_1_18"`, `"0_1_22"`, `"0_1_23"`, `"0_1_24"` or `"0_1_25"` (`25` or `"0.1.25"` also work).
-`client_key` and `domain` are ignored for legacy versions.
+`client_key` and `domain` are optional, but pass the site's own values when you have them.
+
+`version` defaults to `"4.5.0"` (Secured Fields). For sites on legacy encryption (`adyenjs_0_1_XX$...`), pass `"0_1_18"`, `"0_1_22"`, `"0_1_23"`, `"0_1_24"` or `"0_1_25"`. Legacy versions ignore `client_key` and `domain`.
 
 ```python
-result = ccencrypt.ccadyen(
-    encrypt_key="10001|...",
-    card="4242424242424242",
-    month="12",
-    year="2029",
-    cvc="123",
-    version="0_1_25",
-)
+result = ccencrypt.ccadyen(encrypt_key, card, month, year, cvc, version="0_1_25")
 ```
 
-To encrypt a custom payload (e.g. `holderName`) with a legacy version:
+To encrypt a custom legacy payload such as `holderName`:
 
 ```python
 from ccencrypt.adyen import parse_public_key
 
 blob = ccencrypt.cse_encrypt(
     {"holderName": "John Smith", "generationtime": "2029-01-01T00:00:00.000Z"},
-    parse_public_key("10001|..."),
+    parse_public_key("10001|A532..."),
     version="0_1_25",
 )
 ```
 
-### CyberSource
+### CyberSource Flex
 
-You need a `context` JWT from the merchant init endpoint first (e.g. `/cybersource/init`).
+`context` is the capture context JWT from the site's CyberSource init endpoint.
+
+Encrypt and exchange for a transient token in one call:
 
 ```python
-import ccencrypt
-
-token = ccencrypt.cccybersource(
+token = ccencrypt.cccybersource_token(
     card="4242424242424242",
     month="12",
     year="2029",
     cvv="123",
-    context=context_jwt_from_init,
+    context=context,
+    origin="https://www.example.com",
+    user_agent="Mozilla/5.0 ...",
 )
 ```
 
-Post `token` to `https://flex.cybersource.com/flex/v2/tokens` as `application/jwt`.
+For Microform sites, pass `microform=True` instead of `origin`.
 
-Or encrypt and exchange in one call:
-
-```python
-transient_token = ccencrypt.cccybersource_token(
-    card="4242424242424242",
-    month="12",
-    year="2029",
-    cvv="123",
-    context=context_jwt_from_init,
-    origin="https://www.myer.com.au",
-    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
-)
-```
-
-Microform sites (e.g. Pokemon Centre):
-
-```python
-transient_token = ccencrypt.cccybersource_token(
-    card="4242424242424242",
-    month="12",
-    year="2029",
-    cvv="123",
-    context=capture_context,
-    microform=True,
-    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
-)
-```
-
-Returns the transient token body from Flex `/tokens` (HTTP 201).
+To encrypt only, use `cccybersource` with the same card arguments and `context`. It returns a JWE that you POST yourself to `https://flex.cybersource.com/flex/v2/tokens` as `application/jwt`.
 
 ### eWay
 
-Use the `data-eway-encrypt-key` value from the merchant form (base64 modulus blob).
+`encrypt_key` is the `data-eway-encrypt-key` value from the site's payment form.
 
 ```python
-import ccencrypt
+fields = ccencrypt.cceway_card(encrypt_key, card="4242424242424242", cvv="123")
 
-encrypted_pan = ccencrypt.cceway(encrypt_key, "4242424242424242")
-encrypted_cvv = ccencrypt.cceway(encrypt_key, "123")
-
-# or both at once for EWAY form fields
-fields = ccencrypt.cceway_card(
-    encrypt_key,
-    card="4242424242424242",
-    cvv="123",
-)
-# fields["EWAY_CARDNUMBER"], fields["EWAY_CARDCVN"]
+fields["EWAY_CARDNUMBER"]
+fields["EWAY_CARDCVN"]
 ```
 
-Returns strings prefixed with `eCrypted:` as eWay expects.
+To encrypt a single value, use `ccencrypt.cceway(encrypt_key, value)`.
 
-## Requirements
+---
 
-- Python 3.9+
-- cryptography
-- requests
+## Tokenisation
+
+### Stripe
+
+`key` is the site's publishable key (`pk_live_...`), sent as `key=` in the site's requests to `api.stripe.com`.
+
+```python
+pm = ccencrypt.ccstripe(
+    key="pk_live_...",
+    card="4242424242424242",
+    month="12",
+    year="2029",
+    cvc="123",
+    name="John Smith",
+)
+```
+
+If the site's requests also send `_stripe_account=acct_...`, pass it as `account`.
+
+### Braintree
+
+`client_token` is the base64 client token the site hands to Braintree. A raw `authorizationFingerprint` also works.
+
+```python
+nonce = ccencrypt.ccbraintree(
+    client_token="eyJ2ZXJzaW9uIjoy...",
+    card="4242424242424242",
+    month="12",
+    year="2029",
+    cvv="123",
+    name="John Smith",
+)
+```
+
+### Shopify
+
+`domain` is the store's domain, without `https://` or `www.`.
+
+```python
+session_id = ccencrypt.ccshopify(
+    domain="example.com.au",
+    card="4242424242424242",
+    month="12",
+    year="2029",
+    cvv="123",
+    name="John Smith",
+)
+```
+
+The returned id goes into the checkout's payment as the card `sessionId`.
+
+### PayDock
+
+`public_key` is the site's PayDock public key, sent as `x-user-public-key` in the site's requests to `api.paydock.com`.
+
+```python
+token = ccencrypt.ccpaydock(
+    public_key="5b12b8af...",
+    card="4242424242424242",
+    month="12",
+    year="2029",
+    cvv="123",
+    name="John Smith",
+)
+```
+
+If the site's token request includes a `gateway_id`, pass it as `gateway_id`.

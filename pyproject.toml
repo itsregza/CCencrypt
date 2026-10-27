@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "CCencrypt"
 version = "0.3.0"
-description = "Adyen and CyberSource card encryption for Python"
+description = "Card encryption and tokenisation for Adyen, CyberSource, eWay, Stripe, Braintree, Shopify and PayDock"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
