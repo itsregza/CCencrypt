@@ -1,14 +1,12 @@
 import requests
 
-from ccencrypt.helpers.card import proxies, spaced_card
+from ccencrypt.helpers.card import expiry, proxies, spaced_card
 
 SHOPIFY_PCI_URL = "https://checkout.pci.shopifyinc.com/sessions"
 
 
 def ccshopify(domain, card, month, year, cvv, name, proxy=None, timeout=30):
-    year = str(year).strip()
-    if len(year) == 2:
-        year = "20" + year
+    month, year = expiry(month, year)
     payload = {
         "credit_card": {
             "number": spaced_card(card),

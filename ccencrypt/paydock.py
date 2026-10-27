@@ -1,17 +1,18 @@
 import requests
 
-from ccencrypt.helpers.card import clean_card, proxies
+from ccencrypt.helpers.card import clean_card, expiry, proxies
 
 PAYDOCK_TOKENS_URL = "https://api.paydock.com/v1/payment_sources/tokens"
 
 
 def ccpaydock(public_key, card, month, year, cvv, name, gateway_id="", proxy=None, timeout=30):
+    month, year = expiry(month, year)
     payload = {
         "type": "card",
         "card_name": name,
         "card_number": clean_card(card),
-        "expire_month": str(month).strip().zfill(2)[-2:],
-        "expire_year": str(year).strip()[-2:],
+        "expire_month": month,
+        "expire_year": year[-2:],
         "card_ccv": str(cvv).strip(),
         "gateway_id": gateway_id,
         "store_ccv": True,

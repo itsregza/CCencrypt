@@ -2,19 +2,20 @@ import uuid
 
 import requests
 
-from ccencrypt.helpers.card import clean_card, proxies
+from ccencrypt.helpers.card import clean_card, expiry, proxies
 
 STRIPE_PM_URL = "https://api.stripe.com/v1/payment_methods"
 STRIPE_JS = "stripe.js/e2a5fc9c3e; stripe-js-v3/e2a5fc9c3e; card-element"
 
 
 def ccstripe(key, card, month, year, cvc, name="", account=None, proxy=None, timeout=30):
+    month, year = expiry(month, year)
     data = {
         "type": "card",
         "card[number]": clean_card(card),
         "card[cvc]": str(cvc).strip(),
-        "card[exp_month]": str(month).strip().zfill(2),
-        "card[exp_year]": str(year).strip()[-2:],
+        "card[exp_month]": month,
+        "card[exp_year]": year[-2:],
         "payment_user_agent": STRIPE_JS,
         "guid": str(uuid.uuid4()),
         "muid": str(uuid.uuid4()),

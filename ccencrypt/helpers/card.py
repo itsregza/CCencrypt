@@ -11,3 +11,11 @@ def spaced_card(card):
 
 def proxies(proxy):
     return {"http": proxy, "https": proxy} if proxy else None
+
+
+def expiry(month, year):
+    m = "".join(c for c in str(month) if c.isdigit()).zfill(2)[-2:]
+    y = "".join(c for c in str(year) if c.isdigit())
+    if len(y) == 2:
+        y = "20" + y
+    return m, y

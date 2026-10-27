@@ -4,7 +4,7 @@ import uuid
 
 import requests
 
-from ccencrypt.helpers.card import clean_card, proxies
+from ccencrypt.helpers.card import clean_card, expiry, proxies
 
 BRAINTREE_GQL_URL = "https://payments.braintree-api.com/graphql"
 
@@ -23,6 +23,7 @@ def fingerprint(client_token):
 
 
 def ccbraintree(client_token, card, month, year, cvv, name="", proxy=None, timeout=30):
+    month, year = expiry(month, year)
     payload = {
         "clientSdkMetadata": {
             "source": "client",
@@ -34,8 +35,8 @@ def ccbraintree(client_token, card, month, year, cvv, name="", proxy=None, timeo
             "input": {
                 "creditCard": {
                     "number": clean_card(card),
-                    "expirationMonth": str(month).strip().zfill(2),
-                    "expirationYear": str(year).strip(),
+                    "expirationMonth": month,
+                    "expirationYear": year,
                     "cvv": str(cvv).strip(),
                     "cardholderName": name,
                 },

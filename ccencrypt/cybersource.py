@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from ccencrypt.helpers.card import clean_card
+from ccencrypt.helpers.card import clean_card, expiry
 from ccencrypt.helpers.encoding import b64url, b64url_decode, jwt_payload
 
 FLEX_TOKENS_URL = "https://flex.cybersource.com/flex/v2/tokens"
@@ -50,12 +50,13 @@ def cccybersource(card, month, year, cvv, context, index=0):
         "alg": "RSA-OAEP",
         "enc": "A256GCM",
     }
+    month, year = expiry(month, year)
     payload = {
         "data": {
             "number": clean_card(card),
             "securityCode": str(cvv),
-            "expirationMonth": str(month),
-            "expirationYear": str(year),
+            "expirationMonth": month,
+            "expirationYear": year,
             "type": card_type(card),
         },
         "context": context,
